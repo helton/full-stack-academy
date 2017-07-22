@@ -1,0 +1,11 @@
+{
+  "name": "full-stack-academy",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/helton/full-stack-academy",
+  "author": "Helton Carlos de Souza <heltoncarlossouza@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.15.3"
+  }
+}
