@@ -82,7 +82,19 @@ const insert = (db, collectionName, doc) => {
 
 app.get('/operacoes', async (req, res) => {
   const operacoes = await findAll(app.db, 'operacoes')
-  render(res, 'operacoes', { operacoes, functions })
+  render(res, 'operacoes', { titulo: 'Todas', operacoes, functions })
+})
+
+app.get('/operacoes-entrada', async (req, res) => {
+  const todasOperacoes = await findAll(app.db, 'operacoes')
+  const operacoes = todasOperacoes.filter(o => o.valor >= 0)
+  render(res, 'operacoes', { titulo: 'Entradas', operacoes, functions })
+})
+
+app.get('/operacoes-saida', async (req, res) => {
+  const todasOperacoes = await findAll(app.db, 'operacoes')
+  const operacoes = todasOperacoes.filter(o => o.valor < 0)
+  render(res, 'operacoes', { titulo: 'Saídas', operacoes, functions })
 })
 
 app.get('/nova-operacao', (req, res) => {
