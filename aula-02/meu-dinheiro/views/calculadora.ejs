@@ -10,7 +10,23 @@
     <% if (resultado.calculado) { %>
       <div class="resultado">
         <h2>Resultado</h2>
-        <p><%= functions.formatCurrency(resultado.total) %></p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Mês</th>
+              <th>Valor</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% resultado.totais.forEach(iteracao => { %>
+              <tr>
+                <td><%= iteracao.mes %></td>
+                <td class="currency"><%= functions.formatCurrency(iteracao.valor) %></td>
+              </tr>
+            <% }) %>
+          <tbody>
+        </table>
       </div>
     <% } %>
 <% include footer %>
