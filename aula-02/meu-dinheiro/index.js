@@ -49,7 +49,7 @@ app.get('/calculadora', (req, res) => {
 
   const resultado = { 
     calculado: false
-  } 
+  }
   if (req.query.valorInicial && req.query.taxa && req.query.tempo) {
     resultado.calculado = true
     resultado.total = calculoJuros(
@@ -82,7 +82,7 @@ const insert = (db, collectionName, doc) => {
 
 app.get('/operacoes', async (req, res) => {
   const operacoes = await findAll(app.db, 'operacoes')
-  render(res, 'operacoes', { operacoes, functions })
+  render(res, 'operacoes', { operacoes })
 })
 
 app.get('/nova-operacao', (req, res) => {
@@ -98,6 +98,32 @@ app.post('/nova-operacao', async (req, res) => {
     const result = await insert(app.db, 'operacoes', operacao)
     console.log(result)
     res.redirect('/operacoes')
+  } catch (ex) {
+    console.error(ex)
+    res.redirect('/')
+  }
+})
+
+app.get('/contas-mensais', async (req, res) => {
+  const contasMensais = await findAll(app.db, 'contas-mensais')
+  render(res, 'contas-mensais', { contasMensais })
+})
+
+app.get('/nova-conta-mensal', (req, res) => {
+  render(res, 'nova-conta-mensal')
+})
+
+app.post('/nova-conta-mensal', async (req, res) => {
+  const contaMensal = {
+    descricao: req.body.descricao,
+    valorEstimado: parseFloat(req.body.valorEstimado),
+    diaVencimento: parseInt(req.body.diaVencimento)
+  }
+
+  try {
+    const result = await insert(app.db, 'contas-mensais', contaMensal)
+    console.log(result)
+    res.redirect('contas-mensais')
   } catch (ex) {
     console.error(ex)
     res.redirect('/')

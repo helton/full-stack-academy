@@ -1,0 +1,30 @@
+<% include header %>
+  <h2>Contas Mensais</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Descrição</th>
+        <th>Valor Estimado</th>
+        <th>Dia do Vencimento</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% contasMensais.forEach(contaMensal => { %>
+        <tr>
+          <td><%= contaMensal.descricao %></td>
+          <td class="currency"><%= functions.formatCurrency(contaMensal.valorEstimado) %></td>
+          <td><%= contaMensal.diaVencimento %></td>
+        </tr>
+      <% }) %>
+    <tbody>
+    <tfoot>
+      <tr>
+        <td>Total</td>
+        <td class="currency"><%= functions.formatCurrency(functions.sum(contasMensais, ({valorEstimado}) => valorEstimado)) %></td>
+        <td></td>
+      </tr>
+    </tfoot>
+  </table>
+
+<% include footer %>
