@@ -89,19 +89,19 @@ const insert = (db, collectionName, doc) => {
 
 app.get('/operacoes', async (req, res) => {
   const operacoes = await findAll(app.db, 'operacoes')
-  render(res, 'operacoes', { titulo: 'Todas', operacoes, functions })
+  render(res, 'operacoes', { titulo: 'Todas', operacoes })
 })
 
 app.get('/operacoes-entrada', async (req, res) => {
   const todasOperacoes = await findAll(app.db, 'operacoes')
   const operacoes = todasOperacoes.filter(o => o.valor >= 0)
-  render(res, 'operacoes', { titulo: 'Entradas', operacoes, functions })
+  render(res, 'operacoes', { titulo: 'Entradas', operacoes })
 })
 
 app.get('/operacoes-saida', async (req, res) => {
   const todasOperacoes = await findAll(app.db, 'operacoes')
   const operacoes = todasOperacoes.filter(o => o.valor < 0)
-  render(res, 'operacoes', { titulo: 'Saídas', operacoes, functions })
+  render(res, 'operacoes', { titulo: 'Saídas', operacoes })
 })
 
 app.get('/nova-operacao', (req, res) => {
@@ -117,6 +117,32 @@ app.post('/nova-operacao', async (req, res) => {
     const result = await insert(app.db, 'operacoes', operacao)
     console.log(result)
     res.redirect('/operacoes')
+  } catch (ex) {
+    console.error(ex)
+    res.redirect('/')
+  }
+})
+
+app.get('/contas-mensais', async (req, res) => {
+  const contasMensais = await findAll(app.db, 'contas-mensais')
+  render(res, 'contas-mensais', { contasMensais })
+})
+
+app.get('/nova-conta-mensal', (req, res) => {
+  render(res, 'nova-conta-mensal')
+})
+
+app.post('/nova-conta-mensal', async (req, res) => {
+  const contaMensal = {
+    descricao: req.body.descricao,
+    valorEstimado: parseFloat(req.body.valorEstimado),
+    diaVencimento: parseInt(req.body.diaVencimento)
+  }
+
+  try {
+    const result = await insert(app.db, 'contas-mensais', contaMensal)
+    console.log(result)
+    res.redirect('contas-mensais')
   } catch (ex) {
     console.error(ex)
     res.redirect('/')
