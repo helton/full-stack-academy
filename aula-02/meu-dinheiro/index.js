@@ -10,6 +10,29 @@ const app = express()
 const port = 3000
 const mongoUri = `mongodb://${process.env.MONGO_DB_USER}:${process.env.MONGO_DB_PASSWORD}@${process.env.MONGO_DB_HOST_NODE_01},${process.env.MONGO_DB_HOST_NODE_02},${process.env.MONGO_DB_HOST_NODE_03}/${process.env.MONGO_DB_NAME}?ssl=${process.env.MONGO_DB_SSL}&replicaSet=${process.env.MONGO_DB_REPLICA_SET}&authSource=${process.env.MONGO_DB_AUTH_SOURCE}`
 
+const functions = {
+  formatCurrency: currency => {
+    let formatter = new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    })
+
+    // Contornando o problema do separador decimal não ser exibido corretamente
+    return (
+      formatter
+        .format(currency)
+        .replace(/\./g, '#')
+        .replace(/,/g, '.')
+        .replace(/#/g, ',')
+    )
+  },
+  sum: (collection, fn) => collection.reduce((acc, val) => acc + fn(val), 0)
+}
+
+const render = (response, view, data={}) => {
+  response.render(view, Object.assign(data, { functions }))
+}
+
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 
@@ -18,7 +41,7 @@ app.set('views', path.join(__dirname, 'views'))
 app.set('view engine', 'ejs')
 
 app.get('/', (req, res) => {
-  res.render('home')
+  render(res, 'home')
 })
 
 app.get('/calculadora', (req, res) => {
@@ -35,7 +58,7 @@ app.get('/calculadora', (req, res) => {
       parseInt(req.query.tempo)
     ) 
   }
-  res.render('calculadora', { resultado })
+  render(res, 'calculadora', { resultado })
 })
 
 const findAll = (db, collectionName) => {
@@ -59,11 +82,11 @@ const insert = (db, collectionName, doc) => {
 
 app.get('/operacoes', async (req, res) => {
   const operacoes = await findAll(app.db, 'operacoes')
-  res.render('operacoes', { operacoes })
+  render(res, 'operacoes', { operacoes, functions })
 })
 
 app.get('/nova-operacao', (req, res) => {
-  res.render('nova-operacao')
+  render(res, 'nova-operacao')
 })
 
 app.post('/nova-operacao', async (req, res) => {

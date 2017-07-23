@@ -1,6 +1,27 @@
 <% include header %>
   <h2>Operações</h2>
-  <% operacoes.forEach(operacao => { %>
-    <p><%= operacao.descricao %> R$ <%= operacao.valor %></p>
-  <% }) %>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Descrição</th>
+        <th>Valor</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% operacoes.forEach(operacao => { %>
+        <tr>
+          <td><%= operacao.descricao %></td>
+          <td class="currency"><%= functions.formatCurrency(operacao.valor) %></td>
+        </tr>
+      <% }) %>
+    <tbody>
+    <tfoot>
+      <tr>
+        <td>Total</td>
+        <td class="currency"><%= functions.formatCurrency(functions.sum(operacoes, ({valor}) => valor)) %></td>
+      </tr>
+    </tfoot>
+  </table>
+
 <% include footer %>
