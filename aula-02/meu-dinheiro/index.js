@@ -10,6 +10,14 @@ const app = express()
 const port = 3000
 const mongoUri = `mongodb://${process.env.MONGO_DB_USER}:${process.env.MONGO_DB_PASSWORD}@${process.env.MONGO_DB_HOST_NODE_01},${process.env.MONGO_DB_HOST_NODE_02},${process.env.MONGO_DB_HOST_NODE_03}/${process.env.MONGO_DB_NAME}?ssl=${process.env.MONGO_DB_SSL}&replicaSet=${process.env.MONGO_DB_REPLICA_SET}&authSource=${process.env.MONGO_DB_AUTH_SOURCE}`
 
+
+app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({ extended: true }))
+
+app.use(express.static('public'))
+app.set('views', path.join(__dirname, 'views'))
+app.set('view engine', 'ejs')
+
 const functions = {
   formatCurrency: currency => {
     let formatter = new Intl.NumberFormat('pt-BR', {
@@ -29,44 +37,16 @@ const functions = {
   sum: (collection, fn) => collection.reduce((acc, val) => acc + fn(val), 0)
 }
 
-const render = (response, view, data={}) => {
+const render = (response, view, data = {}) => {
   response.render(view, Object.assign(data, { functions }))
 }
 
-app.use(bodyParser.json())
-app.use(bodyParser.urlencoded({ extended: true }))
-
-app.use(express.static('public'))
-app.set('views', path.join(__dirname, 'views'))
-app.set('view engine', 'ejs')
-
-app.get('/', (req, res) => {
-  render(res, 'home')
-})
-
-app.get('/calculadora', (req, res) => {
-  const calculoJuros = (p, i, n) => p * Math.pow(1 + i, n)
-
-  const resultado = { calculado: false } 
-
-  let { valorInicial, taxa, tempo } = req.query
-
-  if (valorInicial && taxa && tempo) {
-    valorInicial = parseFloat(valorInicial)
-    taxa = parseFloat(taxa)/100
-    tempo = parseInt(tempo)
-
-    const meses = Array.from(new Array(tempo), (tempo, i) => i)
-
-    resultado.totais = meses.map(mes => ({ 
-      mes: mes + 1,
-      valor: calculoJuros(valorInicial, taxa, mes + 1)
-    }))
-
-    resultado.calculado = true
-  }
-  render(res, 'calculadora', { resultado })
-})
+const operacoesComSubTotal = operacoes => {
+  return operacoes.map((operacao, index) => {
+    const subTotal = operacoes.slice(0, index + 1).reduce((acc, operacao) => acc + operacao.valor, 0)
+    return Object.assign({ subTotal }, operacao)
+  })
+}
 
 const findAll = (db, collectionName) => {
   const collection = db.collection(collectionName)
@@ -87,21 +67,49 @@ const insert = (db, collectionName, doc) => {
   })
 }
 
+app.get('/', (req, res) => {
+  render(res, 'home')
+})
+
+app.get('/calculadora', (req, res) => {
+  const calculoJuros = (p, i, n) => p * Math.pow(1 + i, n)
+
+  const resultado = { calculado: false }
+
+  let { valorInicial, taxa, tempo } = req.query
+
+  if (valorInicial && taxa && tempo) {
+    valorInicial = parseFloat(valorInicial)
+    taxa = parseFloat(taxa) / 100
+    tempo = parseInt(tempo)
+
+    const meses = Array.from(new Array(tempo), (tempo, i) => i)
+
+    resultado.totais = meses.map(mes => ({
+      mes: mes + 1,
+      valor: calculoJuros(valorInicial, taxa, mes + 1)
+    }))
+
+    resultado.calculado = true
+  }
+  render(res, 'calculadora', { resultado })
+})
+
 app.get('/operacoes', async (req, res) => {
-  const operacoes = await findAll(app.db, 'operacoes')
-  render(res, 'operacoes', { titulo: 'Todas', operacoes })
+  const todasOperacoes = await findAll(app.db, 'operacoes')
+  render(res, 'operacoes', { titulo: 'Todas', operacoes : operacoesComSubTotal(todasOperacoes) })
 })
 
 app.get('/operacoes-entrada', async (req, res) => {
   const todasOperacoes = await findAll(app.db, 'operacoes')
-  const operacoes = todasOperacoes.filter(o => o.valor >= 0)
-  render(res, 'operacoes', { titulo: 'Entradas', operacoes })
+  const operacoesEntrada = todasOperacoes.filter(o => o.valor >= 0)
+  render(res, 'operacoes', { titulo: 'Entradas', operacoes : operacoesComSubTotal(operacoesEntrada) })
 })
 
 app.get('/operacoes-saida', async (req, res) => {
   const todasOperacoes = await findAll(app.db, 'operacoes')
-  const operacoes = todasOperacoes.filter(o => o.valor < 0)
-  render(res, 'operacoes', { titulo: 'Saídas', operacoes })
+  const operacoesSaida = todasOperacoes.filter(o => o.valor < 0)
+  render(res, 'operacoes', { titulo: 'Saídas', operacoes : operacoesComSubTotal(operacoesSaida) })
 })
 
 app.get('/nova-operacao', (req, res) => {
@@ -110,9 +118,9 @@ app.get('/nova-operacao', (req, res) => {
 
 app.post('/nova-operacao', async (req, res) => {
   const descricao = req.body.descricao,
-        valor     = parseFloat(req.body.valor)
-  const operacao = { descricao, valor }
-  
+        valor = parseFloat(req.body.valor),
+        operacao = { descricao, valor }
+
   try {
     const result = await insert(app.db, 'operacoes', operacao)
     console.log(result)
@@ -153,7 +161,7 @@ MongoClient.connect(mongoUri, (err, db) => {
   if (err) {
     console.error(err)
   } else {
-    app.db = db 
+    app.db = db
     app.listen(port, () => console.log(`Servidor rodando na porta ${port}...`))
   }
 })

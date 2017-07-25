@@ -10,14 +10,11 @@
       </tr>
     </thead>
     <tbody>
-      <% let subTotal = 0
-         operacoes.forEach(operacao => { 
-           subTotal += operacao.valor
-      %>
+      <% operacoes.forEach(operacao => { %>
         <tr>
           <td><%= operacao.descricao %></td>
           <td class="currency"><%= functions.formatCurrency(operacao.valor) %></td>
-          <td class="currency"><%= functions.formatCurrency(subTotal) %></td>
+          <td class="currency"><%= functions.formatCurrency(operacao.subTotal) %></td>
         </tr>
       <% }) %>
     <tbody>
